@@ -1,94 +1,230 @@
-﻿# EnvGod CLI (@rusamer/envgod-cli)
+﻿# EnvGod CLI (`@rusamer/envgod-cli`)
 
 Official command-line interface for EnvGod.
+Built for **secure runtime secrets injection** and **team workflows** (RBAC + approvals) without printing or persisting secrets.
 
-## Installation
+- Backend: Control Plane (CP) + Data Plane (DP)
+- Dashboard: approve devices + requests
+- CLI: login + request access + run apps with injected env
+- SDK: `@rusamer/envgod` is used internally by the CLI for Data Plane secret retrieval
 
+---
+
+## Install
+
+### Global (recommended)
 ```bash
-npm install -g @rusamer/envgod-cli
+npm i -g @rusamer/envgod-cli
+```
+
+### Local (CI / repo)
+```bash
+npm i -D @rusamer/envgod-cli
+# or
+pnpm add -D @rusamer/envgod-cli
+```
+
+Run locally:
+```bash
+npx envgod --help
+# or
+pnpm envgod --help
 ```
 
 ## Configuration
 
-- API base URL: the CLI targets your backend via `ENVGOD_API_URL`.
-  - If unset, it defaults to `http://localhost:3000` (local dev).
-  - For your temporary Koyeb backend, set it before running commands:
+### Backend URL
+The CLI targets your EnvGod backend via `ENVGOD_API_URL`.
 
-  PowerShell (current session):
-  ```powershell
-  $env:ENVGOD_API_URL = 'https://glorious-elle-rusamer-131a45de.koyeb.app'
-  ```
+Default: `http://localhost:3000`
 
-  Bash (current session):
-  ```bash
-  export ENVGOD_API_URL="https://glorious-elle-rusamer-131a45de.koyeb.app"
-  ```
+PowerShell:
+```powershell
+$env:ENVGOD_API_URL="https://your-backend.example.com"
+```
 
-## Login
+Bash:
+```bash
+export ENVGOD_API_URL="https://your-backend.example.com"
+```
 
-To get started, log in to your EnvGod account:
+## Security Model (Short)
+- Device login (Vercel-style): CLI gets a short CP token only after browser approval.
+- Runtime keys are show-once: approver sees the raw API key once; later only prefix.
+- No secrets printed by default: `run` injects into a child process env only.
+- Local storage: CLI stores tokens/keys locally (do not commit them).
 
+## Quick Start (Teams Flow)
+
+### 1) Login (device code)
+```bash
+envgod login
+```
+The CLI prints a `user_code` and `verification_url`. Open the URL, enter the code, approve the device.
+
+### 2) Select scope (org/project/env/service)
+You can list and choose scope:
+```bash
+envgod orgs
+envgod projects --org <org-id>
+```
+
+### 3) Request a runtime key (approval required)
+```bash
+envgod request-runtime-key \
+  --org <org-id> \
+  --project <project-id> \
+  --env <env-id> \
+  --service <service-id> \
+  --reason "CI runtime access"
+```
+A Maintainer/Owner approves in the dashboard.
+
+### 4) Add the approved key (local)
+Copy the key from the approval (shown once), then store it locally:
+```bash
+envgod add-runtime-key \
+  --org <org-id> \
+  --project <project-id> \
+  --env <env-id> \
+  --service <service-id> \
+  --key envgod_sk_XXXXXXXXXXXXXXXXXXXXXXXX
+```
+
+### 5) Run your app with injected secrets (MOST IMPORTANT)
+```bash
+envgod run \
+  --org <org-id> \
+  --project <project-id> \
+  --env <env-id> \
+  --service <service-id> -- \
+  node -e "console.log('HAS_SECRET=', Boolean(process.env.MY_SECRET))"
+```
+This does not print secret values. It injects them into the child process environment only.
+
+## Commands (v0.2.0)
+
+### login
+Start device login flow.
 ```bash
 envgod login
 ```
 
-This starts the device login flow. You will be prompted to open a URL in your browser and enter a code to authorize the CLI.
-
-## Usage
-
-### `whoami`
-
-Check the identity of the currently logged-in user.
-
+### whoami
+Show the current user.
 ```bash
 envgod whoami
 ```
 
-### `orgs`
-
-List the organizations you are a member of.
-
+### orgs
+List organizations you belong to.
 ```bash
 envgod orgs
 ```
 
-### `projects`
-
-List projects within an organization.
-
+### projects
+List projects within an org.
 ```bash
 envgod projects --org <org-id>
 ```
 
-### `request-runtime-key`
-
-Request a runtime API key for a specific scope.
-
+### request-runtime-key
+Create an access request for a scoped runtime key (CP). Requires Maintainer/Owner approval.
 ```bash
-envgod request-runtime-key --org <org-id> --project <project-id> --env <env-id> --service <service-id> --reason "Your reason here"
+envgod request-runtime-key \
+  --org <org-id> \
+  --project <project-id> \
+  --env <env-id> \
+  --service <service-id> \
+  --reason "Your reason here"
 ```
 
-### `status`
+### requests
+List access requests (no secret values are shown). Optionally filter by status.
+```bash
+envgod requests --org <org-id>
+envgod requests --org <org-id> --status PENDING
+envgod requests --org <org-id> --status APPROVED
+envgod requests --org <org-id> --status DENIED
+```
 
-Check your local authentication status and connectivity to the EnvGod backend.
+### add-runtime-key
+Store an approved runtime key locally for a scope. Used by `run`/`export`/`env-example`.
+```bash
+envgod add-runtime-key \
+  --org <org-id> \
+  --project <project-id> \
+  --env <env-id> \
+  --service <service-id> \
+  --key envgod_sk_XXXXXXXXXXXXXXXXXXXXXXXX
+```
 
+### run
+Fetch secrets securely and inject into a child process environment.
+
+Default: no printing, no writing to disk
+
+Flags:
+- `--override` allow overwriting existing env vars
+- `--print-keys` print keys only (no values)
+
+```bash
+envgod run --org <org> --project <project> --env <env> --service <service> -- \
+  node -e "console.log(Object.keys(process.env).includes('MY_SECRET'))"
+```
+
+### export
+Safe export. Redacted by default. Use `--plain` to output real values (requires confirmation or `--yes`).
+```bash
+# Redacted dotenv to STDOUT
+envgod export --org <org> --project <project> --env <env> --service <service> --format dotenv
+
+# Plain JSON to a file (dangerous)
+envgod export --org <org> --project <project> --env <env> --service <service> \
+  --format json --plain --out secrets.json --yes
+```
+
+### env-example
+Generate `.env.example` (keys only; no values). Defaults to STDOUT.
+```bash
+envgod env-example --org <org> --project <project> --env <env> --service <service> --out .env.example
+```
+
+### status
+Check local auth status and connectivity.
 ```bash
 envgod status
 ```
 
-### `logout`
-
-Log out and clear your local credentials.
-
+### logout
+Log out and clear local credentials.
 ```bash
 envgod logout
 ```
 
+## CI / Deployment Notes
+CLI is for build/runtime injection, but you must decide where the runtime key lives:
+
+- Preferred: obtain key via approval, store it as a secure secret in your CI provider, then use `envgod run`.
+- Never commit runtime keys or tokens to git.
+
+Example (CI):
+```bash
+envgod add-runtime-key --org $ORG --project $PROJECT --env $ENV --service $SERVICE --key "$ENVGOD_RUNTIME_KEY"
+envgod run --org $ORG --project $PROJECT --env $ENV --service $SERVICE -- pnpm start
+```
+
 ## Troubleshooting
+- Login approved but no token:
+  - Ensure backend `/cp/device/token` returns `cp_access_token`.
+  - Ensure `ENVGOD_API_URL` is correct.
+- 401 / session expired:
+  - Re-run `envgod login`.
+- Targeting wrong backend:
+  - Set `ENVGOD_API_URL` explicitly.
+- Request approved but key missing:
+  - Approve returns raw `api_key` only once. After that, only `api_key_prefix` is returned.
 
-- Login approved but no token: Ensure the backend `/cp/device/token` response schema includes `cp_access_token` and redeploy.
-- 401 or session expired: Re-login. The dashboard redirects to `/login?expired=1` when the session expires.
-- whoami fails: Verify the backend exposes `GET /cp/me`.
-- Targeting the wrong backend: set `ENVGOD_API_URL` to your intended API base URL.
-
+## Author
 Made by Rusamer
+Email: rusamer@gmail.com
