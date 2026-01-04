@@ -38,52 +38,44 @@ async function resolveApiBaseUrl() {
 
 // src/lib/store.ts
 var import_keytar = __toESM(require("keytar"));
-var SERVICE = "envgod-cli";
-var ACCOUNT = "default";
-function scopeKey(input) {
-  const { orgId, projectId, envId, serviceId } = input;
-  return `org:${orgId}|project:${projectId}|env:${envId}|service:${serviceId}`;
+var SERVICE = "envgod";
+function getCpAccountKey() {
+  return `cp:${API_BASE_URL}`;
 }
-async function load() {
-  const data = await import_keytar.default.getPassword(SERVICE, ACCOUNT);
-  if (!data) return {};
+function getRuntimeAccountKey(scope) {
+  const { orgId, projectId, envId, serviceId } = scope;
+  return `runtime:${API_BASE_URL}:${orgId}:${projectId}:${envId}:${serviceId}`;
+}
+async function setTokens(refreshToken, accessToken) {
+  const account = getCpAccountKey();
+  const value = JSON.stringify({ refreshToken, accessToken });
+  await import_keytar.default.setPassword(SERVICE, account, value);
+}
+async function getTokens() {
+  const account = getCpAccountKey();
+  const data = await import_keytar.default.getPassword(SERVICE, account);
+  if (!data) return null;
   try {
     return JSON.parse(data);
   } catch {
-    return {};
+    return null;
   }
 }
-async function save(obj) {
-  await import_keytar.default.setPassword(SERVICE, ACCOUNT, JSON.stringify(obj));
-}
-async function setTokens(refreshToken, accessToken) {
-  const obj = await load();
-  obj.refreshToken = refreshToken;
-  obj.accessToken = accessToken;
-  await save(obj);
-}
-async function getTokens() {
-  const obj = await load();
-  if (!obj.accessToken && !obj.refreshToken) return null;
-  return { refreshToken: obj.refreshToken ?? "", accessToken: obj.accessToken ?? "" };
-}
 async function getAccessToken() {
-  const obj = await load();
-  return obj.accessToken ?? null;
+  const tokens = await getTokens();
+  return tokens?.accessToken ?? null;
 }
 async function clearTokens() {
-  await import_keytar.default.deletePassword(SERVICE, ACCOUNT);
+  const account = getCpAccountKey();
+  await import_keytar.default.deletePassword(SERVICE, account);
 }
 async function getRuntimeKey(scope) {
-  const obj = await load();
-  const key = obj.runtimeKeys?.[scopeKey(scope)];
-  return key ?? null;
+  const account = getRuntimeAccountKey(scope);
+  return import_keytar.default.getPassword(SERVICE, account);
 }
 async function setRuntimeKey(scope, apiKey) {
-  const obj = await load();
-  if (!obj.runtimeKeys) obj.runtimeKeys = {};
-  obj.runtimeKeys[scopeKey(scope)] = apiKey;
-  await save(obj);
+  const account = getRuntimeAccountKey(scope);
+  await import_keytar.default.setPassword(SERVICE, account, apiKey);
 }
 
 // src/lib/device-flow.ts

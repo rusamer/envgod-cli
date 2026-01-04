@@ -6,7 +6,7 @@ const program = new Command();
 
 program
   .version('0.2.0')
-  .description('EnvGod CLI');
+  .description('Env.Guards CLI');
 
 import { loginCommand } from './commands/login';
 import { logoutCommand } from './commands/logout';

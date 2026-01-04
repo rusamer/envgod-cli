@@ -1,61 +1,62 @@
 import keytar from 'keytar';
+import { API_BASE_URL } from './config';
 
-const SERVICE = 'envgod-cli';
-const ACCOUNT = 'default';
+const SERVICE = 'envguards'; // Simplified service name
 
-type Persisted = {
-  refreshToken?: string;
-  accessToken?: string;
-  runtimeKeys?: Record<string, string>; // scopeKey -> runtimeKey
+// --- Account Key Generation ---
+
+function getCpAccountKey(): string {
+  return `cp:${API_BASE_URL}`;
+}
+
+function getRuntimeAccountKey(scope: { orgId: string; projectId: string; envId: string; serviceId: string }): string {
+  const { orgId, projectId, envId, serviceId } = scope;
+  return `runtime:${API_BASE_URL}:${orgId}:${projectId}:${envId}:${serviceId}`;
+}
+
+// --- Control Plane Token Management ---
+
+type CpTokens = {
+  refreshToken: string;
+  accessToken: string;
 };
 
-function scopeKey(input: { orgId: string; projectId: string; envId: string; serviceId: string }): string {
-  const { orgId, projectId, envId, serviceId } = input;
-  return `org:${orgId}|project:${projectId}|env:${envId}|service:${serviceId}`;
+export async function setTokens(refreshToken: string, accessToken: string): Promise<void> {
+  const account = getCpAccountKey();
+  const value = JSON.stringify({ refreshToken, accessToken });
+  await keytar.setPassword(SERVICE, account, value);
 }
 
-async function load(): Promise<Persisted> {
-  const data = await keytar.getPassword(SERVICE, ACCOUNT);
-  if (!data) return {};
-  try { return JSON.parse(data) as Persisted; } catch { return {}; }
-}
-
-async function save(obj: Persisted): Promise<void> {
-  await keytar.setPassword(SERVICE, ACCOUNT, JSON.stringify(obj));
-}
-
-export async function setTokens(refreshToken: string, accessToken: string) {
-  const obj = await load();
-  obj.refreshToken = refreshToken;
-  obj.accessToken = accessToken;
-  await save(obj);
-}
-
-export async function getTokens(): Promise<{ refreshToken: string; accessToken: string } | null> {
-  const obj = await load();
-  if (!obj.accessToken && !obj.refreshToken) return null;
-  return { refreshToken: obj.refreshToken ?? '', accessToken: obj.accessToken ?? '' };
+export async function getTokens(): Promise<CpTokens | null> {
+  const account = getCpAccountKey();
+  const data = await keytar.getPassword(SERVICE, account);
+  if (!data) return null;
+  try {
+    return JSON.parse(data) as CpTokens;
+  } catch {
+    return null;
+  }
 }
 
 export async function getAccessToken(): Promise<string | null> {
-  const obj = await load();
-  // TODO: check for expiry and refresh if needed
-  return obj.accessToken ?? null;
+  const tokens = await getTokens();
+  // TODO: Implement refresh logic if accessToken is expired
+  return tokens?.accessToken ?? null;
 }
 
-export async function clearTokens() {
-  await keytar.deletePassword(SERVICE, ACCOUNT);
+export async function clearTokens(): Promise<void> {
+  const account = getCpAccountKey();
+  await keytar.deletePassword(SERVICE, account);
 }
+
+// --- Data Plane (Runtime Key) Management ---
 
 export async function getRuntimeKey(scope: { orgId: string; projectId: string; envId: string; serviceId: string }): Promise<string | null> {
-  const obj = await load();
-  const key = obj.runtimeKeys?.[scopeKey(scope)];
-  return key ?? null;
+  const account = getRuntimeAccountKey(scope);
+  return keytar.getPassword(SERVICE, account);
 }
 
 export async function setRuntimeKey(scope: { orgId: string; projectId: string; envId: string; serviceId: string }, apiKey: string): Promise<void> {
-  const obj = await load();
-  if (!obj.runtimeKeys) obj.runtimeKeys = {};
-  obj.runtimeKeys[scopeKey(scope)] = apiKey;
-  await save(obj);
+  const account = getRuntimeAccountKey(scope);
+  await keytar.setPassword(SERVICE, account, apiKey);
 }

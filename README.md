@@ -1,12 +1,12 @@
-﻿# EnvGod CLI (`@rusamer/envgod-cli`)
+# Env.Guards CLI (`@rusamer/envguards-cli`)
 
-Official command-line interface for EnvGod.
+Official command-line interface for Env.Guards.
 Built for **secure runtime secrets injection** and **team workflows** (RBAC + approvals) without printing or persisting secrets.
 
 - Backend: Control Plane (CP) + Data Plane (DP)
 - Dashboard: approve devices + requests
 - CLI: login + request access + run apps with injected env
-- SDK: `@rusamer/envgod` is used internally by the CLI for Data Plane secret retrieval
+- SDK: `@rusamer/envguards` is used internally by the CLI for Data Plane secret retrieval
 
 ---
 
@@ -14,38 +14,38 @@ Built for **secure runtime secrets injection** and **team workflows** (RBAC + ap
 
 ### Global (recommended)
 ```bash
-npm i -g @rusamer/envgod-cli
+npm i -g @rusamer/envguards-cli
 ```
 
 ### Local (CI / repo)
 ```bash
-npm i -D @rusamer/envgod-cli
+npm i -D @rusamer/envguards-cli
 # or
-pnpm add -D @rusamer/envgod-cli
+pnpm add -D @rusamer/envguards-cli
 ```
 
 Run locally:
 ```bash
-npx envgod --help
+npx envguards --help
 # or
-pnpm envgod --help
+pnpm envguards --help
 ```
 
 ## Configuration
 
 ### Backend URL
-The CLI targets your EnvGod backend via `ENVGOD_API_URL`.
+The CLI targets your Env.Guards backend via `ENV_GUARDS_API_URL`.
 
 Default: `http://localhost:3000`
 
 PowerShell:
 ```powershell
-$env:ENVGOD_API_URL="https://your-backend.example.com"
+$env:ENV_GUARDS_API_URL="https://your-backend.example.com"
 ```
 
 Bash:
 ```bash
-export ENVGOD_API_URL="https://your-backend.example.com"
+export ENV_GUARDS_API_URL="https://your-backend.example.com"
 ```
 
 ## Security Model (Short)
@@ -58,20 +58,20 @@ export ENVGOD_API_URL="https://your-backend.example.com"
 
 ### 1) Login (device code)
 ```bash
-envgod login
+envguards login
 ```
 The CLI prints a `user_code` and `verification_url`. Open the URL, enter the code, approve the device.
 
 ### 2) Select scope (org/project/env/service)
 You can list and choose scope:
 ```bash
-envgod orgs
-envgod projects --org <org-id>
+envguards orgs
+envguards projects --org <org-id>
 ```
 
 ### 3) Request a runtime key (approval required)
 ```bash
-envgod request-runtime-key \
+envguards request-runtime-key \
   --org <org-id> \
   --project <project-id> \
   --env <env-id> \
@@ -83,17 +83,17 @@ A Maintainer/Owner approves in the dashboard.
 ### 4) Add the approved key (local)
 Copy the key from the approval (shown once), then store it locally:
 ```bash
-envgod add-runtime-key \
+envguards add-runtime-key \
   --org <org-id> \
   --project <project-id> \
   --env <env-id> \
   --service <service-id> \
-  --key envgod_sk_XXXXXXXXXXXXXXXXXXXXXXXX
+  --key envguards_sk_XXXXXXXXXXXXXXXXXXXXXXXX
 ```
 
 ### 5) Run your app with injected secrets (MOST IMPORTANT)
 ```bash
-envgod run \
+envguards run \
   --org <org-id> \
   --project <project-id> \
   --env <env-id> \
@@ -107,31 +107,31 @@ This does not print secret values. It injects them into the child process enviro
 ### login
 Start device login flow.
 ```bash
-envgod login
+envguards login
 ```
 
 ### whoami
 Show the current user.
 ```bash
-envgod whoami
+envguards whoami
 ```
 
 ### orgs
 List organizations you belong to.
 ```bash
-envgod orgs
+envguards orgs
 ```
 
 ### projects
 List projects within an org.
 ```bash
-envgod projects --org <org-id>
+envguards projects --org <org-id>
 ```
 
 ### request-runtime-key
 Create an access request for a scoped runtime key (CP). Requires Maintainer/Owner approval.
 ```bash
-envgod request-runtime-key \
+envguards request-runtime-key \
   --org <org-id> \
   --project <project-id> \
   --env <env-id> \
@@ -142,21 +142,21 @@ envgod request-runtime-key \
 ### requests
 List access requests (no secret values are shown). Optionally filter by status.
 ```bash
-envgod requests --org <org-id>
-envgod requests --org <org-id> --status PENDING
-envgod requests --org <org-id> --status APPROVED
-envgod requests --org <org-id> --status DENIED
+envguards requests --org <org-id>
+envguards requests --org <org-id> --status PENDING
+envguards requests --org <org-id> --status APPROVED
+envguards requests --org <org-id> --status DENIED
 ```
 
 ### add-runtime-key
 Store an approved runtime key locally for a scope. Used by `run`/`export`/`env-example`.
 ```bash
-envgod add-runtime-key \
+envguards add-runtime-key \
   --org <org-id> \
   --project <project-id> \
   --env <env-id> \
   --service <service-id> \
-  --key envgod_sk_XXXXXXXXXXXXXXXXXXXXXXXX
+  --key envguards_sk_XXXXXXXXXXXXXXXXXXXXXXXX
 ```
 
 ### run
@@ -169,7 +169,7 @@ Flags:
 - `--print-keys` print keys only (no values)
 
 ```bash
-envgod run --org <org> --project <project> --env <env> --service <service> -- \
+envguards run --org <org> --project <project> --env <env> --service <service> -- \
   node -e "console.log(Object.keys(process.env).includes('MY_SECRET'))"
 ```
 
@@ -177,51 +177,51 @@ envgod run --org <org> --project <project> --env <env> --service <service> -- \
 Safe export. Redacted by default. Use `--plain` to output real values (requires confirmation or `--yes`).
 ```bash
 # Redacted dotenv to STDOUT
-envgod export --org <org> --project <project> --env <env> --service <service> --format dotenv
+envguards export --org <org> --project <project> --env <env> --service <service> --format dotenv
 
 # Plain JSON to a file (dangerous)
-envgod export --org <org> --project <project> --env <env> --service <service> \
+envguards export --org <org> --project <project> --env <env> --service <service> \
   --format json --plain --out secrets.json --yes
 ```
 
 ### env-example
 Generate `.env.example` (keys only; no values). Defaults to STDOUT.
 ```bash
-envgod env-example --org <org> --project <project> --env <env> --service <service> --out .env.example
+envguards env-example --org <org> --project <project> --env <env> --service <service> --out .env.example
 ```
 
 ### status
 Check local auth status and connectivity.
 ```bash
-envgod status
+envguards status
 ```
 
 ### logout
 Log out and clear local credentials.
 ```bash
-envgod logout
+envguards logout
 ```
 
 ## CI / Deployment Notes
 CLI is for build/runtime injection, but you must decide where the runtime key lives:
 
-- Preferred: obtain key via approval, store it as a secure secret in your CI provider, then use `envgod run`.
+- Preferred: obtain key via approval, store it as a secure secret in your CI provider, then use `envguards run`.
 - Never commit runtime keys or tokens to git.
 
 Example (CI):
 ```bash
-envgod add-runtime-key --org $ORG --project $PROJECT --env $ENV --service $SERVICE --key "$ENVGOD_RUNTIME_KEY"
-envgod run --org $ORG --project $PROJECT --env $ENV --service $SERVICE -- pnpm start
+envguards add-runtime-key --org $ORG --project $PROJECT --env $ENV --service $SERVICE --key "$ENV_GUARDS_RUNTIME_KEY"
+envguards run --org $ORG --project $PROJECT --env $ENV --service $SERVICE -- pnpm start
 ```
 
 ## Troubleshooting
 - Login approved but no token:
   - Ensure backend `/cp/device/token` returns `cp_access_token`.
-  - Ensure `ENVGOD_API_URL` is correct.
+  - Ensure `ENV_GUARDS_API_URL` is correct.
 - 401 / session expired:
-  - Re-run `envgod login`.
+  - Re-run `envguards login`.
 - Targeting wrong backend:
-  - Set `ENVGOD_API_URL` explicitly.
+  - Set `ENV_GUARDS_API_URL` explicitly.
 - Request approved but key missing:
   - Approve returns raw `api_key` only once. After that, only `api_key_prefix` is returned.
 

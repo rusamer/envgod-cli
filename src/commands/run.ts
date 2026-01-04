@@ -15,7 +15,7 @@ interface RunOptions {
 
 async function handleRun(cmds: string[], options: RunOptions) {
   if (!cmds || cmds.length === 0) {
-    console.error('Missing command to run. Usage: envgod run --org <orgId> --project <projectId> --env <envId> --service <serviceId> -- <command...>');
+    console.error('Missing command to run. Usage: envguards run --org <orgId> --project <projectId> --env <envId> --service <serviceId> -- <command...>');
     process.exitCode = 2;
     return;
   }
@@ -30,7 +30,7 @@ async function handleRun(cmds: string[], options: RunOptions) {
   const runtimeKey = await getRuntimeKey(scope);
   if (!runtimeKey) {
     console.error('No runtime key found for this scope.');
-    console.error('Request one with: envgod request-runtime-key --org <orgId> --project <projectId> --env <envId> --service <serviceId> --reason "<reason>"');
+    console.error('Request one with: envguards request-runtime-key --org <orgId> --project <projectId> --env <envId> --service <serviceId> --reason "<reason>"');
     process.exitCode = 1;
     return;
   }

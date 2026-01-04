@@ -22,7 +22,7 @@ async function handleEnvExample(options: EnvExampleOptions) {
   const runtimeKey = await getRuntimeKey(scope);
   if (!runtimeKey) {
     console.error('No runtime key found for this scope.');
-    console.error('Request one with: envgod request-runtime-key --org <orgId> --project <projectId> --env <envId> --service <serviceId> --reason "<reason>"');
+    console.error('Request one with: envguards request-runtime-key --org <orgId> --project <projectId> --env <envId> --service <serviceId> --reason "<reason>"');
     process.exitCode = 1;
     return;
   }

@@ -1,9 +1,9 @@
 {
-  "name": "@rusamer/envgod-cli",
-  "version": "0.2.0",
+  "name": "@rusamer/envguards-cli",
+  "version": "0.1.0",
   "license": "MIT",
   "bin": {
-    "envgod": "./dist/index.js"
+    "envguards": "./dist/index.js"
   },
   "files": [
     "dist",

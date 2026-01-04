@@ -11,8 +11,8 @@ interface AddKeyOptions {
 
 async function handleAddKey(options: AddKeyOptions) {
   const { org, project, env, service, key } = options;
-  if (!key || !/^envgod_sk_/.test(key)) {
-    console.error('Invalid or missing key. Expected format envgod_sk_...');
+  if (!key || !/^envguards_sk_/.test(key)) {
+    console.error('Invalid or missing key. Expected format envguards_sk_...');
     process.exitCode = 2;
     return;
   }
@@ -31,5 +31,5 @@ export const addKeyCommand = new Command('add-runtime-key')
   .requiredOption('--project <projectId>', 'Project ID or name')
   .requiredOption('--env <envId>', 'Environment ID or name')
   .requiredOption('--service <serviceId>', 'Service ID or name')
-  .requiredOption('--key <envgod_sk_...>', 'Runtime API key to store')
+  .requiredOption('--key <envguards_sk_...>', 'Runtime API key to store')
   .action(handleAddKey);
