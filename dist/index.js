@@ -31,14 +31,14 @@ var import_commander = require("commander");
 
 // src/lib/config.ts
 var DEFAULT_API_BASE_URL = "http://localhost:3000";
-var API_BASE_URL = process.env.ENVGOD_API_URL || DEFAULT_API_BASE_URL;
+var API_BASE_URL = process.env.ENVGUARDS_API_URL || DEFAULT_API_BASE_URL;
 async function resolveApiBaseUrl() {
-  return process.env.ENVGOD_API_URL || API_BASE_URL || DEFAULT_API_BASE_URL;
+  return process.env.ENVGUARDS_API_URL || API_BASE_URL || DEFAULT_API_BASE_URL;
 }
 
 // src/lib/store.ts
 var import_keytar = __toESM(require("keytar"));
-var SERVICE = "envgod";
+var SERVICE = "envguards";
 function getCpAccountKey() {
   return `cp:${API_BASE_URL}`;
 }
@@ -332,7 +332,7 @@ async function spawnWithEnv(command, args, env) {
 // src/commands/run.ts
 async function handleRun(cmds, options) {
   if (!cmds || cmds.length === 0) {
-    console.error("Missing command to run. Usage: envgod run --org <orgId> --project <projectId> --env <envId> --service <serviceId> -- <command...>");
+    console.error("Missing command to run. Usage: envguards run --org <orgId> --project <projectId> --env <envId> --service <serviceId> -- <command...>");
     process.exitCode = 2;
     return;
   }
@@ -345,7 +345,7 @@ async function handleRun(cmds, options) {
   const runtimeKey = await getRuntimeKey(scope);
   if (!runtimeKey) {
     console.error("No runtime key found for this scope.");
-    console.error('Request one with: envgod request-runtime-key --org <orgId> --project <projectId> --env <envId> --service <serviceId> --reason "<reason>"');
+    console.error('Request one with: envguards request-runtime-key --org <orgId> --project <projectId> --env <envId> --service <serviceId> --reason "<reason>"');
     process.exitCode = 1;
     return;
   }
@@ -435,7 +435,7 @@ async function handleExport(options) {
   const runtimeKey = await getRuntimeKey(scope);
   if (!runtimeKey) {
     console.error("No runtime key found for this scope.");
-    console.error('Request one with: envgod request-runtime-key --org <orgId> --project <projectId> --env <envId> --service <serviceId> --reason "<reason>"');
+    console.error('Request one with: envguards request-runtime-key --org <orgId> --project <projectId> --env <envId> --service <serviceId> --reason "<reason>"');
     process.exitCode = 1;
     return;
   }
@@ -486,7 +486,7 @@ async function handleEnvExample(options) {
   const runtimeKey = await getRuntimeKey(scope);
   if (!runtimeKey) {
     console.error("No runtime key found for this scope.");
-    console.error('Request one with: envgod request-runtime-key --org <orgId> --project <projectId> --env <envId> --service <serviceId> --reason "<reason>"');
+    console.error('Request one with: envguards request-runtime-key --org <orgId> --project <projectId> --env <envId> --service <serviceId> --reason "<reason>"');
     process.exitCode = 1;
     return;
   }
@@ -541,8 +541,8 @@ var requestsCommand = new import_commander11.Command("requests").description("Li
 var import_commander12 = require("commander");
 async function handleAddKey(options) {
   const { org, project, env, service, key } = options;
-  if (!key || !/^envgod_sk_/.test(key)) {
-    console.error("Invalid or missing key. Expected format envgod_sk_...");
+  if (!key || !/^envguards_sk_/.test(key)) {
+    console.error("Invalid or missing key. Expected format envguards_sk_...");
     process.exitCode = 2;
     return;
   }
@@ -554,11 +554,11 @@ async function handleAddKey(options) {
     process.exitCode = 1;
   }
 }
-var addKeyCommand = new import_commander12.Command("add-runtime-key").description("Store a runtime key locally for a specific scope").requiredOption("--org <orgId>", "Organization ID").requiredOption("--project <projectId>", "Project ID or name").requiredOption("--env <envId>", "Environment ID or name").requiredOption("--service <serviceId>", "Service ID or name").requiredOption("--key <envgod_sk_...>", "Runtime API key to store").action(handleAddKey);
+var addKeyCommand = new import_commander12.Command("add-runtime-key").description("Store a runtime key locally for a specific scope").requiredOption("--org <orgId>", "Organization ID").requiredOption("--project <projectId>", "Project ID or name").requiredOption("--env <envId>", "Environment ID or name").requiredOption("--service <serviceId>", "Service ID or name").requiredOption("--key <envguards_sk_...>", "Runtime API key to store").action(handleAddKey);
 
 // src/index.ts
 var program = new import_commander13.Command();
-program.version("0.2.0").description("EnvGod CLI");
+program.version("0.2.0").description("Env.Guards CLI");
 program.addCommand(loginCommand);
 program.addCommand(logoutCommand);
 program.addCommand(whoamiCommand);

@@ -1,6 +1,19 @@
 # Env.Guards CLI (`@rusamer/envguards-cli`)
 
 Official command-line interface for Env.Guards.
+
+## The EnvGuards Workflow
+
+Env.Guards is a complete system for managing secrets. The CLI is the primary tool for developers to securely run their applications without needing `.env` files.
+
+1.  **Management via the Dashboard**: A user signs up and manages their secrets using the **Env.Guards Frontend**. They create Organizations, Projects, Environments, and Services.
+
+2.  **Local Development & CI/CD with the CLI**: As a developer, you use this CLI to:
+    -   Log in to your Env.Guards account (`envguards login`).
+    -   Request access to secrets for a specific service (`envguards request-runtime-key`).
+    -   Once approved by a team member, run your application with secrets securely injected (`envguards run -- ...`).
+
+3.  **Server-Side Integration with the SDK**: For applications that need to fetch secrets directly at runtime (e.g., serverless functions), the **`@rusamer/envguards` SDK** is used instead of the CLI.
 Built for **secure runtime secrets injection** and **team workflows** (RBAC + approvals) without printing or persisting secrets.
 
 - Backend: Control Plane (CP) + Data Plane (DP)
